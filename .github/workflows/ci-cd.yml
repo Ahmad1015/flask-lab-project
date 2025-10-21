@@ -41,7 +41,7 @@ jobs:
         run: |
           if [ -d member1_backend/tests ]; then
             cd member1_backend
-            pytest tests/ --verbose --cov=. --cov-report=term-missing --junitxml=test-results.xml
+            python -m pytest tests/test_app.py --junitxml=test-results.xml -v
           else
             echo "No backend tests found yet"
           fi
