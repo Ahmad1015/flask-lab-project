@@ -1,6 +1,6 @@
 name: CI/CD Pipeline
 
-# Trigger on pushes to main branch from any team member
+# Trigger on pushes or PRs to main branch
 on:
   push:
     branches:
@@ -15,7 +15,9 @@ env:
   DOCKER_IMAGE_FRONTEND: react-frontend
 
 jobs:
-  # Job 1: Run automated tests for Backend (Flask)
+  # ==========================================
+  # 1️⃣ Test Flask Backend
+  # ==========================================
   test-backend:
     name: Test Flask Backend
     runs-on: ubuntu-latest
@@ -41,7 +43,7 @@ jobs:
         run: |
           if [ -d member1_backend/tests ]; then
             cd member1_backend
-            pytest tests/ --verbose --cov=. --cov-report=term-missing --junitxml=test-results.xml
+            python -m pytest tests/test_app.py --junitxml=test-results.xml -v
           else
             echo "No backend tests found yet"
           fi
@@ -53,7 +55,9 @@ jobs:
           name: backend-test-results
           path: member1_backend/test-results.xml
 
-  # Job 2: Run automated tests for Frontend (React + Vite)
+  # ==========================================
+  # 2️⃣ Test React Frontend
+  # ==========================================
   test-frontend:
     name: Test React Frontend
     runs-on: ubuntu-latest
@@ -96,12 +100,14 @@ jobs:
             echo "No frontend build script found yet"
           fi
 
-  # Job 3: Build Docker image for Backend
+  # ==========================================
+  # 3️⃣ Build Backend Docker Image
+  # ==========================================
   build-backend:
     name: Build Backend Docker Image
     runs-on: ubuntu-latest
     needs: test-backend
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -109,23 +115,22 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Log in to Docker Hub (Optional)
-        if: github.event_name == 'push'
+      - name: Log in to Docker Hub
+        if: github.event_name == 'push' && secrets.DOCKER_HUB_USERNAME != ''
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
-        continue-on-error: true
 
-      - name: Extract metadata for Docker
+      - name: Extract Docker metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: |
-            ${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.DOCKER_IMAGE_BACKEND }}
+          # ✅ Use fallback username if secret is missing
+          images: ${{ secrets.DOCKER_HUB_USERNAME != '' && secrets.DOCKER_HUB_USERNAME || 'local' }}/${{ env.DOCKER_IMAGE_BACKEND }}
           tags: |
             type=ref,event=branch
-            type=sha,prefix={{branch}}-
+            type=sha,prefix=main-
             type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push Backend Docker image
@@ -133,14 +138,15 @@ jobs:
         with:
           context: ./main
           file: ./main/Dockerfile
-          # Push only if logged in to Docker Hub and it's a push to main
           push: ${{ github.event_name == 'push' && secrets.DOCKER_HUB_USERNAME != '' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  # Job 4: Build Docker image for Frontend
+  # ==========================================
+  # 4️⃣ Build Frontend Docker Image
+  # ==========================================
   build-frontend:
     name: Build Frontend Docker Image
     runs-on: ubuntu-latest
@@ -164,24 +170,23 @@ jobs:
         if: steps.check_dockerfile.outputs.exists == 'true'
         uses: docker/setup-buildx-action@v3
 
-      - name: Log in to Docker Hub (Optional)
-        if: steps.check_dockerfile.outputs.exists == 'true' && github.event_name == 'push'
+      - name: Log in to Docker Hub
+        if: steps.check_dockerfile.outputs.exists == 'true' && github.event_name == 'push' && secrets.DOCKER_HUB_USERNAME != ''
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
-        continue-on-error: true
 
-      - name: Extract metadata for Docker
+      - name: Extract Docker metadata
         if: steps.check_dockerfile.outputs.exists == 'true'
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: |
-            ${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.DOCKER_IMAGE_FRONTEND }}
+          # ✅ Same fallback fix for frontend
+          images: ${{ secrets.DOCKER_HUB_USERNAME != '' && secrets.DOCKER_HUB_USERNAME || 'local' }}/${{ env.DOCKER_IMAGE_FRONTEND }}
           tags: |
             type=ref,event=branch
-            type=sha,prefix={{branch}}-
+            type=sha,prefix=main-
             type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push Frontend Docker image
@@ -190,32 +195,30 @@ jobs:
         with:
           context: ./member2_frontend
           file: ./member2_frontend/Dockerfile
-          # Push only if logged in to Docker Hub and it's a push to main
           push: ${{ github.event_name == 'push' && secrets.DOCKER_HUB_USERNAME != '' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  # Job 5: Deploy Frontend to GitHub Pages
+  # ==========================================
+  # 5️⃣ Deploy Frontend to GitHub Pages
+  # ==========================================
   deploy-frontend:
     name: Deploy Frontend to GitHub Pages
     runs-on: ubuntu-latest
     needs: test-frontend
-    # Only deploy on push to main branch
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     
-    # Grant GITHUB_TOKEN the permissions required to make a Pages deployment
     permissions:
       contents: read
       pages: write
       id-token: write
-    
-    # Allow only one concurrent deployment
+
     concurrency:
       group: "pages"
       cancel-in-progress: false
-    
+
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -254,7 +257,6 @@ jobs:
           cd member2_frontend
           npm run build
         env:
-          # Set base path for GitHub Pages (adjust if your repo name is different)
           BASE_URL: /${{ github.event.repository.name }}/
 
       - name: Setup Pages
@@ -265,7 +267,6 @@ jobs:
         if: steps.check_frontend.outputs.exists == 'true'
         uses: actions/upload-pages-artifact@v3
         with:
-          # Upload the dist directory from Vite build
           path: './member2_frontend/dist'
 
       - name: Deploy to GitHub Pages
@@ -273,9 +274,11 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
-  # Job 6: Deployment notification (optional)
+  # ==========================================
+  # 6️⃣ Final Summary
+  # ==========================================
   notify:
-    name: Deployment Status
+    name: Deployment Summary
     runs-on: ubuntu-latest
     needs: [build-backend, build-frontend, deploy-frontend]
     if: always()

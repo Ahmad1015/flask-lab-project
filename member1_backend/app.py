@@ -48,7 +48,11 @@ def homepage():
         if request.headers.get('Accept') == 'application/json':
             return jsonify(app_info)
         else:
+<<<<<<< HEAD
             return jsonify(app_info), 200  # For now return JSON, frontend team will add templates
+=======
+            return jsonify(app_info)  # For now, always return JSON
+>>>>>>> main
             
     except Exception as e:
         logger.error(f"Error in homepage route: {str(e)}")
@@ -57,13 +61,18 @@ def homepage():
 @app.route('/health', methods=['GET'])
 def health_check():
     """
+<<<<<<< HEAD
     Health check endpoint - Returns application health status
     Used by load balancers and monitoring systems
+=======
+    Health check endpoint - Returns service status
+>>>>>>> main
     """
     try:
         health_status = {
             'status': 'OK',
             'timestamp': datetime.now().isoformat(),
+<<<<<<< HEAD
             'uptime': 'Running',
             'version': '1.0.0',
             'database_status': 'Connected',  # Placeholder for database connection
@@ -81,10 +90,20 @@ def health_check():
             'message': str(e),
             'timestamp': datetime.now().isoformat()
         }), 500
+=======
+            'version': '1.0.0',
+            'service': 'Flask Backend'
+        }
+        return jsonify(health_status), 200
+    except Exception as e:
+        logger.error(f"Error in health check: {str(e)}")
+        return jsonify({'status': 'ERROR', 'message': str(e)}), 500
+>>>>>>> main
 
 @app.route('/data', methods=['POST'])
 def submit_data():
     """
+<<<<<<< HEAD
     POST endpoint for data submission
     Accepts JSON data and stores it (in-memory for now)
     """
@@ -156,10 +175,68 @@ def get_data():
             'error': 'Failed to retrieve data',
             'details': str(e)
         }), 500
+=======
+    Data submission endpoint - Accepts JSON data and stores it
+    """
+    try:
+        # Check if request contains JSON data
+        if not request.is_json:
+            return jsonify({'error': 'Content-Type must be application/json'}), 400
+        
+        data = request.get_json()
+        
+        # Validate that data is not None/empty
+        if data is None:
+            return jsonify({'error': 'No JSON data provided'}), 400
+        
+        # Add metadata to the data entry
+        entry_id = len(data_store) + 1
+        data_entry = {
+            'id': entry_id,
+            'data': data,
+            'timestamp': datetime.now().isoformat(),
+            'ip_address': request.remote_addr
+        }
+        
+        # Store the data
+        data_store.append(data_entry)
+        
+        logger.info(f"Data submitted successfully: Entry ID {entry_id}")
+        
+        response = {
+            'message': 'Data submitted successfully',
+            'entry_id': entry_id,
+            'data_received': data,
+            'timestamp': data_entry['timestamp']
+        }
+        
+        return jsonify(response), 201
+        
+    except Exception as e:
+        logger.error(f"Error submitting data: {str(e)}")
+        return jsonify({'error': 'Failed to submit data'}), 400
+
+@app.route('/data', methods=['GET'])
+def get_all_data():
+    """
+    Data retrieval endpoint - Returns all stored data
+    """
+    try:
+        response = {
+            'total_entries': len(data_store),
+            'data': data_store,
+            'timestamp': datetime.now().isoformat()
+        }
+        return jsonify(response), 200
+    except Exception as e:
+        logger.error(f"Error retrieving data: {str(e)}")
+        return jsonify({'error': 'Failed to retrieve data'}), 500
+>>>>>>> main
 
 @app.route('/data/<int:entry_id>', methods=['GET'])
 def get_data_by_id(entry_id):
     """
+<<<<<<< HEAD
     GET endpoint to retrieve specific data entry by ID
     """
     try:
@@ -204,10 +281,42 @@ def internal_error(error):
         'error': 'Internal server error',
         'message': 'An unexpected error occurred on the server'
     }), 500
+=======
+    Get specific data entry by ID
+    """
+    try:
+        # Find the entry with the specified ID
+        entry = next((item for item in data_store if item['id'] == entry_id), None)
+        
+        if entry is None:
+            return jsonify({'error': 'Data entry not found'}), 404
+            
+        return jsonify(entry), 200
+        
+    except Exception as e:
+        logger.error(f"Error retrieving data by ID {entry_id}: {str(e)}")
+        return jsonify({'error': 'Failed to retrieve data'}), 500
+
+@app.errorhandler(404)
+def not_found(error):
+    """
+    Handle 404 errors
+    """
+    return jsonify({'error': 'Endpoint not found'}), 404
+
+@app.errorhandler(500)
+def internal_error(error):
+    """
+    Handle 500 errors
+    """
+    logger.error(f"Internal server error: {str(error)}")
+    return jsonify({'error': 'Internal server error'}), 500
+>>>>>>> main
 
 if __name__ == '__main__':
     # Development server configuration
     port = int(os.environ.get('PORT', 5000))
+<<<<<<< HEAD
     debug = os.environ.get('FLASK_DEBUG', 'True').lower() == 'true'
     
     logger.info(f"Starting Flask application on port {port}")
@@ -217,4 +326,15 @@ if __name__ == '__main__':
         host='0.0.0.0',  # Allow external connections
         port=port,
         debug=debug
+=======
+    debug_mode = os.environ.get('FLASK_ENV') == 'development'
+    
+    logger.info(f"Starting Flask application on port {port}")
+    logger.info(f"Debug mode: {debug_mode}")
+    
+    app.run(
+        host='0.0.0.0',
+        port=port,
+        debug=debug_mode
+>>>>>>> main
     )
