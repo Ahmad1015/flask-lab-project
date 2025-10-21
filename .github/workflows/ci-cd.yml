@@ -299,4 +299,4 @@ jobs:
           if [[ "${{ needs.deploy-frontend.result }}" == "success" ]]; then
             echo "🚀 **Frontend deployed to GitHub Pages!**" >> $GITHUB_STEP_SUMMARY
             echo "Visit: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/" >> $GITHUB_STEP_SUMMARY
-          
+          fi
