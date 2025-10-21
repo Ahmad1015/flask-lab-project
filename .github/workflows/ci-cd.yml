@@ -13,6 +13,7 @@ env:
   DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
   DOCKER_IMAGE_BACKEND: flask-backend
   DOCKER_IMAGE_FRONTEND: react-frontend
+  DOCKER_REGISTRY_OWNER: ${{ secrets.DOCKER_HUB_USERNAME || 'local' }}
 
 jobs:
   # Job 1: Run automated tests for Backend (Flask)
@@ -122,10 +123,10 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            ${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.DOCKER_IMAGE_BACKEND }}
+            ${{ env.DOCKER_REGISTRY_OWNER }}/${{ env.DOCKER_IMAGE_BACKEND }}
           tags: |
             type=ref,event=branch
-            type=sha,prefix={{branch}}-
+            type=sha,format=short,prefix=sha-
             type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push Backend Docker image
@@ -178,10 +179,10 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            ${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.DOCKER_IMAGE_FRONTEND }}
+            ${{ env.DOCKER_REGISTRY_OWNER }}/${{ env.DOCKER_IMAGE_FRONTEND }}
           tags: |
             type=ref,event=branch
-            type=sha,prefix={{branch}}-
+            type=sha,format=short,prefix=sha-
             type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push Frontend Docker image
