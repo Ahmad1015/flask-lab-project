@@ -32,19 +32,26 @@ jobs:
 
       - name: Install backend dependencies
         run: |
-          if [ -f main/requirements.txt ]; then
-            pip install -r main/requirements.txt
+          if [ -f member1_backend/requirements.txt ]; then
+            pip install -r member1_backend/requirements.txt
           fi
           pip install pytest pytest-cov
 
       - name: Run backend tests
         run: |
-          if [ -d main/tests ]; then
-            cd main
-            pytest tests/ --verbose --cov=. --cov-report=term-missing
+          if [ -d member1_backend/tests ]; then
+            cd member1_backend
+            pytest tests/ --verbose --cov=. --cov-report=term-missing --junitxml=test-results.xml
           else
             echo "No backend tests found yet"
           fi
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-results
+          path: member1_backend/test-results.xml
 
   # Job 2: Run automated tests for Frontend (React + Vite)
   test-frontend:
