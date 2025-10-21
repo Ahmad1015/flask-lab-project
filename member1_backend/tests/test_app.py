@@ -63,8 +63,4 @@ def test_get_data_by_id_not_found():
     response = app.test_client().get('/data/99999')
     assert response.status_code == 404
     data = response.get_json()
-<<<<<<< HEAD
     assert data['error'] == 'Data entry not found'
-=======
-    assert data['error'] == 'Data entry not found'
->>>>>>> main
