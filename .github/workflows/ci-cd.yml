@@ -32,19 +32,26 @@ jobs:
 
       - name: Install backend dependencies
         run: |
-          if [ -f main/requirements.txt ]; then
-            pip install -r main/requirements.txt
+          if [ -f member1_backend/requirements.txt ]; then
+            pip install -r member1_backend/requirements.txt
           fi
           pip install pytest pytest-cov
 
       - name: Run backend tests
         run: |
-          if [ -d main/tests ] && [ -n "$(ls -A main/tests/*.py 2>/dev/null)" ]; then
-            cd main
-            pytest tests/ --verbose --cov=. --cov-report=term-missing
+          if [ -d member1_backend/tests ]; then
+            cd member1_backend
+            pytest tests/ --verbose --cov=. --cov-report=term-missing --junitxml=test-results.xml
           else
-            echo "⚠️ No backend test files found yet, skipping tests"
+            echo "No backend tests found yet"
           fi
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-results
+          path: member1_backend/test-results.xml
 
   # Job 2: Run automated tests for Frontend (React + Vite)
   test-frontend:
@@ -75,29 +82,18 @@ jobs:
         run: |
           if [ -f member2_frontend/package.json ]; then
             cd member2_frontend
-            # Check if test script exists in package.json
-            if npm run | grep -q "test"; then
-              npm test -- --run
-            else
-              echo "⚠️ No test script found in package.json, skipping tests"
-            fi
+            npm test -- --run
           else
-            echo "No frontend package.json found yet"
+            echo "No frontend tests found yet"
           fi
 
       - name: Build frontend
         run: |
           if [ -f member2_frontend/package.json ]; then
             cd member2_frontend
-            # Check if build script exists in package.json
-            if npm run | grep -q "build"; then
-              npm run build
-            else
-              echo "⚠️ No build script found in package.json, skipping build for test phase"
-              echo "Note: Build will be required for deployment to GitHub Pages"
-            fi
+            npm run build
           else
-            echo "No frontend package.json found yet"
+            echo "No frontend build script found yet"
           fi
 
   # Job 3: Build Docker image for Backend
