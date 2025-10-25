@@ -1,17 +1,31 @@
-:root {
-  color-scheme: light;
-  --text: #0f172a;
-  --muted: #475569;
-  --surface: rgba(255, 255, 255, 0.88);
-  --surface-muted: rgba(255, 255, 255, 0.78);
-  --surface-success: rgba(34, 197, 94, 0.14);
-  --accent: #6366f1;
-  --accent-strong: #8b5cf6;
+body {:root {
+
+  margin: 0;  color-scheme: light;
+
+  padding: 0;  --text: #0f172a;
+
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',  --muted: #475569;
+
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',  --surface: rgba(255, 255, 255, 0.88);
+
+    sans-serif;  --surface-muted: rgba(255, 255, 255, 0.78);
+
+  -webkit-font-smoothing: antialiased;  --surface-success: rgba(34, 197, 94, 0.14);
+
+  -moz-osx-font-smoothing: grayscale;  --accent: #6366f1;
+
+}  --accent-strong: #8b5cf6;
+
   --accent-soft: rgba(99, 102, 241, 0.42);
-  --accent-faint: rgba(99, 102, 241, 0.15);
-  --border: rgba(15, 23, 42, 0.08);
-  --border-strong: rgba(15, 23, 42, 0.18);
-  --shadow: 0 35px 80px -45px rgba(15, 23, 42, 0.55);
+
+#root {  --accent-faint: rgba(99, 102, 241, 0.15);
+
+  width: 100%;  --border: rgba(15, 23, 42, 0.08);
+
+  min-height: 100vh;  --border-strong: rgba(15, 23, 42, 0.18);
+
+}  --shadow: 0 35px 80px -45px rgba(15, 23, 42, 0.55);
+
   --shadow-strong: 0 30px 60px -25px rgba(99, 102, 241, 0.55);
   --track: rgba(99, 102, 241, 0.15);
   --focus: rgba(99, 102, 241, 0.35);
